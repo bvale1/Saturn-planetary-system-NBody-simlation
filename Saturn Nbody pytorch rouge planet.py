@@ -21,8 +21,8 @@ class leapfrog:
         self.M = M.unsqueeze(0).T.unsqueeze(2)
         # Acceleration at time=0 for massive bodies and tracers respectively
         self.a, self.a_tracers = self.acceleration()
-        # The overall integration time; iterations
-        self.t = 0; self.k = 0
+        # The overall integration time
+        self.t = 0
         # Time spent integrating orbits
         self.propogation_time = []
         
@@ -36,25 +36,23 @@ class leapfrog:
         self.r_tracers += self.v_tracers * delta_t
         
         # Detect collisions and subsequently delete particles
-        # Currently only done every 5 iterations to improve performance
-        if self.k % 5 == 0:
-            collision = torch.logical_not(torch.logical_or(
-                                          la.norm(self.r_tracers-self.r[0,:],
-                                                  2, axis=1) < self.R_saturn,
-                                          la.norm(self.r_tracers-self.r[1,:],
-                                                  2, axis=1) < self.R_saturn))
-            self.r_tracers = self.r_tracers[collision]
-            self.v_tracers = self.v_tracers[collision]
-            collision = torch.logical_not(torch.logical_or(
-                                          la.norm(self.r-self.r[0,:],
-                                                  2, axis=1) < self.R_saturn,
-                                          la.norm(self.r-self.r[1,:],
-                                                  2, axis=1) < self.R_saturn))
-            collision[:2] = True # Assume planets are too massive to be absorbed
-            self.r = self.r[collision]
-            self.v = self.v[collision]
-            self.M = self.M[collision]
-        self.k += 1
+        collision = torch.logical_not(torch.logical_or(
+                                      la.norm(self.r_tracers-self.r[0,:],
+                                              2, axis=1) < self.R_saturn,
+                                      la.norm(self.r_tracers-self.r[1,:],
+                                              2, axis=1) < self.R_saturn))
+        self.r_tracers = self.r_tracers[collision]
+        self.v_tracers = self.v_tracers[collision]
+        collision = torch.logical_not(torch.logical_or(
+                                      la.norm(self.r-self.r[0,:],
+                                              2, axis=1) < self.R_saturn,
+                                      la.norm(self.r-self.r[1,:],
+                                              2, axis=1) < self.R_saturn))
+        collision[:2] = True # Assume planets are too massive to be absorbed
+        self.r = self.r[collision]
+        self.v = self.v[collision]
+        self.M = self.M[collision]
+
         # In reality moons and planets that come too close will also be tidally
         # disrupted, causing them to fracture
         
