@@ -36,8 +36,8 @@ class leapfrog:
         self.r_tracers += self.v_tracers * delta_t
         
         # Detect collisions and subsequently delete particles
-        # Currently only done every 10 iterations to improve performance
-        if self.k == 10:
+        # Currently only done every 5 iterations to improve performance
+        if self.k % 5 == 0:
             collision = torch.logical_not(torch.logical_or(
                                           la.norm(self.r_tracers-self.r[0,:],
                                                   2, axis=1) < self.R_saturn,
@@ -54,6 +54,7 @@ class leapfrog:
             self.r = self.r[collision]
             self.v = self.v[collision]
             self.M = self.M[collision]
+        self.k += 1
         # In reality moons and planets that come too close will also be tidally
         # disrupted, causing them to fracture
         
@@ -210,7 +211,7 @@ if __name__ == '__main__':
         ax = fig.add_subplot(111, projection="3d")
         rings = ax.scatter(ring_r_0.cpu().numpy()[:,0],
                            ring_r_0.cpu().numpy()[:,1], 
-                           ring_r_0.cpu().numpy()[:,2], s=1, label="Rings", alpha=0.7)
+                           ring_r_0.cpu().numpy()[:,2], s=1, label="Rings")
         
         for i in range(r_0.shape[0]):
             ax.scatter(r_0.cpu().numpy()[:,0], r_0.cpu().numpy()[:,1],
@@ -225,7 +226,7 @@ if __name__ == '__main__':
         while lf.t <= t_max:
             ax.cla()
             t, r, ring_r = lf.propogate(delta_t)
-            ax.scatter(ring_r[:,0], ring_r[:,1], ring_r[:,2], s=0.5, alpha=0.7)
+            ax.scatter(ring_r[:,0], ring_r[:,1], ring_r[:,2], s=0.5)
             ax.scatter(r[0,0], r[0,1], r[0,2], s=250)
             ax.scatter(r[1,0], r[1,1], r[1,2], s=250)
             for i in range(2, np.shape(r)[0]):
